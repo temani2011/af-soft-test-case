@@ -8,6 +8,9 @@ use App\Http\Resources\V1\FurnitureCollection;
 use App\Http\Resources\V1\FurnitureResource;
 use Illuminate\Routing\Controller;
 use App\Models\Furniture;
+use App\Pipelines\V1\Filters\FurnitureFilter;
+use App\Pipelines\V1\Sorters\FurnitureSorter;
+use App\Pipelines\PiplineHandler;
 use Illuminate\Http\Request;
 
 class FurnitureController extends Controller
@@ -20,7 +23,14 @@ class FurnitureController extends Controller
      */
     public function index(Request $request)
     {
-        return new FurnitureCollection(Furniture::query()->paginate(15));
+        $pipeline = new PiplineHandler([
+            FurnitureFilter::class,
+            FurnitureSorter::class,
+        ]);
+
+        $limit = (int) $request->get('limit', 10);
+
+        return new FurnitureCollection($pipeline->apply(Furniture::query())->paginate($limit));
     }
 
     /**
